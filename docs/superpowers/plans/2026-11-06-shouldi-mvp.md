@@ -314,18 +314,21 @@
 
 ## Part D · 上线（M5）
 
-### Task 20: 部署与提审
+### Task 20: 部署与提审（一键脚本方案）
 
 **Files:**
-- Create: `deploy/nginx.conf`、`deploy/ecosystem.config.js`（PM2）、`deploy/backup.sh`（每日 mysqldump）、`server/.env.production.example`
+- Create: `deploy/nginx.conf`、`deploy/ecosystem.config.js`（PM2 cluster ×2）、`deploy/backup.sh`（每日 mysqldump）、`deploy/deploy.sh`、`server/scripts/migrate.js`、`server/.env.production.example`、`docs/release-checklist.md`
 
 **Interfaces:**
-- Produces: 生产可运行部署；提审清单文档 `docs/release-checklist.md`
+- Produces: `deploy.sh` = 服务器一键部署，依次执行：`git pull` → `cd server && npm ci --omit=dev` → `node scripts/migrate.js`（sequelize.sync 增量建表/加列，不做破坏性变更）→ `pm2 reload ecosystem.config.js`（零停机）→ `cd admin && npm ci && npm run build`（产物复制到 Nginx 目录）
+- Produces: `docs/release-checklist.md` 记录部署策略：后端改动秒级热更、免打包；小程序仅在 UI/交互变更时提审（攒批次，勿逐 commit 提审）；开发期用体验版（上传即生效免审核）
+- Consumes: 全部前序任务的产物
 
-- [ ] **Step 1:** 服务器装 Node/MySQL/Nginx；PM2 起 API；Nginx 反代 api 域名 + 托管 admin 静态；certbot HTTPS；crontab 挂 backup.sh
-- [ ] **Step 2:** 小程序后台：request 合法域名、隐私指引、订阅模板、类目核对
-- [ ] **Step 3:** 全链路真机回归（登录→发帖→投票→意见→回访→附近→转发）+ 提审
-- [ ] **Step 4:** Commit `chore: deployment configs + release checklist`
+- [ ] **Step 1:** 服务器初始化：Node 20 / MySQL 8 / Nginx / PM2；Nginx 反代 api 域名 + 托管 admin 静态；certbot HTTPS；crontab 挂 `backup.sh`（每日 mysqldump 保留 7 份）
+- [ ] **Step 2:** 编写 `deploy.sh` 与 `migrate.js`；**零停机验证**：后台循环 `curl /health` 期间执行 `./deploy.sh`，断言全程无失败响应；再验证真实改动：改一处接口文案 → `git push` → `./deploy.sh` → `curl` 确认新文案生效
+- [ ] **Step 3:** 小程序后台配置（request 合法域名、隐私指引、订阅消息模板、类目核对）；上传体验版，扫码可用
+- [ ] **Step 4:** 全链路真机回归（登录→发帖→投票→意见→回访→附近→转发）+ 首次提审
+- [ ] **Step 5:** Commit `chore: one-key deploy script + release checklist`
 
 ---
 
