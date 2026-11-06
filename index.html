@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>帮我选交互原型</title>
+<style>
+/* 设计计划（工作台页）：
+   色彩：暖灰工作台底 + 朱橙品牌色（决断感）；选项用 青绿/琥珀/紫/蓝 四色区分阵营；
+   字体：中文系统栈，以字重与字号建立层级（小程序平台真实做法）；
+   布局：左侧手机原型（粘性），右侧随屏幕联动的「设计注解」栏。 */
+:root{
+  --stage:#F1EFEA; --stage-ink:#1D1C19; --stage-sub:#6D6960; --card:#FFFFFF; --card-line:#E5E1D8;
+  --brand:#E8481F; --brand-ink:#B33010;
+  --f-app:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --stage:#151618; --stage-ink:#ECEAE4; --stage-sub:#9B968C; --card:#1E2023; --card-line:#2D3035;
+    --brand:#FF6A3D; --brand-ink:#FF8A63; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --stage:#151618; --stage-ink:#ECEAE4; --stage-sub:#9B968C; --card:#1E2023; --card-line:#2D3035;
+  --brand:#FF6A3D; --brand-ink:#FF8A63; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+img{max-width:100%}
+body{margin:0;background:var(--stage);color:var(--stage-ink);font-family:var(--f-app);line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font-family:inherit}
+
+/* ===== 页面头 ===== */
+.pagehead{max-width:1120px;margin:0 auto;padding:26px 4px 10px;display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{display:block}
+.logo h1{margin:0;font-size:26px;letter-spacing:.5px}
+.nametag{font-size:12px;color:var(--stage-sub);border:1px solid var(--card-line);border-radius:99px;padding:1px 9px}
+.tagline{flex-basis:100%;margin:0;color:var(--stage-sub);font-size:15px}
+.metachips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.metachips span{font-size:12.5px;color:var(--stage-sub);background:var(--card);border:1px solid var(--card-line);border-radius:99px;padding:2px 11px}
+
+/* ===== 工作台布局 ===== */
+.bench{max-width:1120px;margin:14px auto 60px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:34px;align-items:start}
+@media (max-width:979px){.bench{grid-template-columns:minmax(0,1fr);gap:22px;justify-items:center}}
+.phone-col{position:sticky;top:18px}
+@media (max-width:979px){.phone-col{position:static}}
+.try{max-width:400px;margin:12px auto 0;font-size:12.5px;color:var(--stage-sub);text-align:center}
+
+/* ===== 手机 ===== */
+.phone{position:relative;width:390px;max-width:100%;height:clamp(600px,90vh,812px);
+  background:#0E0F12;border-radius:48px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,.20),0 4px 14px rgba(0,0,0,.12)}
+.scr{position:relative;height:100%;border-radius:38px;overflow:hidden;background:#F4F5F7;display:flex;flex-direction:column;
+  --app-bg:#F4F5F7;--panel:#FFFFFF;--ink:#17191D;--sub:#7B8290;--line:#E9EBEF;--ok:#177247;--okbg:#E9F5EE;--okline:#BFE3CF;
+  font-family:var(--f-app);color:var(--ink)}
+.island{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:25px;border-radius:14px;background:#000;z-index:40}
+.statusbar{flex:none;height:42px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 4px;font-size:13.5px;font-weight:600;color:var(--ink)}
+.statusbar .sicons{display:flex;align-items:center;gap:5px}
+.appnav{flex:none;height:42px;display:flex;align-items:center;justify-content:center;position:relative;background:#F7F8FA;border-bottom:1px solid var(--line)}
+.appnav .ttl{font-size:16px;font-weight:600}
+.navback{position:absolute;left:6px;top:0;bottom:0;display:flex;align-items:center;gap:2px;padding:0 10px 0 4px;font-size:15px;color:var(--ink);border:none;background:none;cursor:pointer}
+.capsule{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:76px;height:28px;border-radius:99px;background:#E7E9ED;display:flex;align-items:center;justify-content:space-evenly}
+.screen{flex:1;min-height:0;overflow-y:auto;padding:12px 12px calc(72px + env(safe-area-inset-bottom,0px));background:var(--app-bg)}
+.phone[data-screen="detail"] .screen{padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+.tabbar{flex:none;display:flex;align-items:flex-end;justify-content:space-around;height:calc(56px + env(safe-area-inset-bottom,0px));
+  padding:4px 10px calc(6px + env(safe-area-inset-bottom,0px));background:#FFFFFF;border-top:1px solid var(--line)}
+.phone[data-screen="detail"] .tabbar{display:none}
+.tab{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:#9AA0AB;cursor:pointer;padding:0}
+.tab.active{color:var(--brand,#E8481F)}
+.tab svg{display:block}
+.fabwrap{flex:none;display:flex;justify-content:center}
+.fab{width:52px;height:52px;border-radius:50%;background:var(--brand,#E8481F);border:4px solid #FFFFFF;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-bottom:8px;box-shadow:0 4px 10px rgba(232,72,31,.35)}
+
+/* ===== 广场 ===== */
+.filterrow{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}
+.filterrow::-webkit-scrollbar{display:none}
+.fchip{flex:none;border:1px solid var(--line);background:#FFFFFF;color:var(--sub);border-radius:99px;padding:3px 12px;font-size:12.5px;cursor:pointer}
+.fchip.on{background:#17191D;border-color:#17191D;color:#fff}
+.feedtabs{display:flex;gap:18px;padding:4px 2px 8px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.ftab{border:none;background:none;font-size:15px;color:var(--sub);cursor:pointer;padding:2px 1px;position:relative}
+.ftab.on{color:var(--ink);font-weight:600}
+.ftab.on::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:3px;border-radius:3px;background:var(--brand,#E8481F)}
+.fcard{background:#FFFFFF;border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:11px;cursor:pointer}
+.fcard:active{background:#FAFAFB}
+.fcard-top{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.docket{font-size:11px;color:var(--sub);border:1px solid var(--line);background:#F7F8FA;border-radius:4px;padding:0 7px;font-variant-numeric:tabular-nums;flex:none;letter-spacing:.3px}
+.sumline{font-size:12px;color:var(--sub);margin-top:1px}
+.dist{margin-left:auto;font-size:11.5px;color:var(--sub);display:inline-flex;align-items:center;gap:3px}
+.cat{font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:5px;padding:0 6px;flex:none}
+.done{font-size:11px;color:var(--ok);background:var(--okbg);border:1px solid var(--okline);border-radius:5px;padding:0 6px;flex:none;font-weight:600}
+.ftime{margin-left:auto;font-size:11.5px;color:var(--sub)}
+.fcard h3{margin:0 0 10px;font-size:15.5px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fopt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;margin-bottom:7px;font-size:13px}
+.fopt-label{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fopt-num{color:var(--sub);font-variant-numeric:tabular-nums}
+.fopt .bar{grid-column:1/-1;height:5px;border-radius:5px;background:#EEF0F3;overflow:hidden}
+.fopt .bar i{display:block;height:100%;border-radius:5px;transition:width .5s ease}
+.fcard-ft{font-size:12px;color:var(--sub);margin-top:2px}
+.emptyhint{font-size:13px;color:var(--sub);background:#F7F8FA;border:1px dashed var(--line);border-radius:9px;padding:9px 11px;margin:2px 0 4px}
+
+/* ===== 详情 ===== */
+.d-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub);margin-bottom:8px}
+.d-title{margin:0 0 10px;font-size:18px;line-height:1.4;font-weight:700}
+.d-bg{background:#FFFFFF;border:1px solid var(--line);border-radius:12px;padding:12px 13px;font-size:14px;line-height:1.7;margin-bottom:12px;white-space:pre-wrap}
+.outcome{background:var(--okbg);border:1px solid var(--okline);border-radius:12px;padding:12px 13px;margin-bottom:12px}
+.outcome-top{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--ok);margin-bottom:6px}
+.outcome-q{font-size:13.5px;line-height:1.65;color:#20492F}
+.d-sec{font-size:13px;font-weight:700;color:var(--sub);margin:16px 0 9px;display:flex;align-items:center;gap:8px}
+.d-sec .cnt{font-weight:400}
+.hintline{font-size:12.5px;color:var(--sub);margin:-3px 0 9px}
+.vopt{width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:#FFFFFF;border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px;cursor:pointer}
+.vopt:hover{border-color:#C9CED6}
+.vopt-l{font-size:14.5px;font-weight:600;flex:none}
+.vopt-d{font-size:12.5px;color:var(--sub);flex:1;min-width:0}
+.vopt-act{flex:none;font-size:12px;color:var(--brand,#E8481F);border:1px solid currentColor;border-radius:99px;padding:2px 11px}
+.ropt{position:relative;background:#FFFFFF;border:1px solid var(--line);border-radius:12px;padding:10px 13px 11px;margin-bottom:9px;overflow:hidden}
+.ropt .row{display:flex;justify-content:space-between;gap:8px;font-size:14px;margin-bottom:6px}
+.ropt .pct{font-variant-numeric:tabular-nums;font-weight:700}
+.ropt .bar{height:6px;border-radius:6px;background:#EEF0F3;overflow:hidden}
+.ropt .bar i{display:block;height:100%;border-radius:6px;transition:width .5s ease}
+.mine-tag{font-size:10.5px;color:var(--brand,#E8481F);border:1px solid currentColor;border-radius:99px;padding:0 7px;margin-left:6px;font-weight:600}
+.rlist{display:flex;flex-direction:column;gap:9px}
+.rcard{background:#FFFFFF;border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.rcard-top{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:11.5px}
+.votedfor{border-radius:5px;padding:1px 7px;font-weight:600}
+.rcard p{margin:0;font-size:13.5px;line-height:1.65}
+.rcard-ft{font-size:11.5px;color:var(--sub);margin-top:6px}
+.sharebtn{width:100%;border:none;background:var(--brand,#E8481F);color:#fff;font-weight:600;border-radius:11px;padding:12px;font-size:14px;margin-top:14px;cursor:pointer;box-shadow:0 4px 12px rgba(232,72,31,.25)}
+.reasonbar{position:absolute;left:0;right:0;bottom:0;display:flex;gap:8px;align-items:center;background:#FFFFFF;border-top:1px solid var(--line);
+  padding:9px 10px calc(9px + env(safe-area-inset-bottom,0px));z-index:20}
+.reasonbar input{flex:1;min-width:0;border:none;background:#F1F2F5;border-radius:99px;padding:9px 14px;font-size:13.5px;color:var(--ink)}
+.reasonbar input:focus{outline:1.5px solid var(--brand,#E8481F)}
+.reasonbar button{border:none;background:var(--brand,#E8481F);color:#fff;border-radius:99px;padding:8px 16px;font-size:13.5px;cursor:pointer;flex:none}
+
+/* ===== 发布 ===== */
+.fgroup{margin-bottom:13px}
+.flabel{font-size:13px;font-weight:700;margin-bottom:7px}
+.cats{display:flex;flex-wrap:wrap;gap:7px}
+.finput,.ftextarea{width:100%;border:1.5px solid var(--line);border-radius:11px;background:#FFFFFF;padding:10px 12px;font-size:14px;color:var(--ink);font-family:inherit}
+.finput:focus,.ftextarea:focus{outline:1.5px solid var(--brand,#E8481F);border-color:transparent}
+.ftextarea{min-height:104px;resize:vertical;line-height:1.6}
+.orow{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.orow .finput{flex:1}
+.odel{flex:none;width:34px;height:38px;border:none;background:#F1F2F5;border-radius:10px;color:var(--sub);font-size:16px;cursor:pointer}
+.oadd{width:100%;border:1.5px dashed #C9CED6;background:none;color:var(--sub);border-radius:11px;padding:10px;font-size:13.5px;cursor:pointer}
+.ocount{font-size:11.5px;color:var(--sub);font-weight:400}
+.anonnote{display:flex;gap:9px;background:#F7F8FA;border:1px solid var(--line);border-radius:11px;padding:10px 12px;font-size:12.5px;color:var(--sub);line-height:1.6}
+.submitbtn{width:100%;border:none;background:var(--brand,#E8481F);color:#fff;font-size:15.5px;font-weight:600;border-radius:13px;padding:13px;margin-top:15px;cursor:pointer;box-shadow:0 5px 14px rgba(232,72,31,.28)}
+
+/* ===== 我的 ===== */
+.mecard{background:#FFFFFF;border:1px solid var(--line);border-radius:14px;padding:15px 15px 13px;margin-bottom:13px}
+.mecard-top{display:flex;align-items:center;gap:12px}
+.avatar{width:46px;height:46px;border-radius:50%;background:#17191D;color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.mecard h4{margin:0;font-size:15.5px}
+.mecard .sub{font-size:12px;color:var(--sub)}
+.mecard-note{font-size:12px;color:var(--sub);background:#F7F8FA;border-radius:9px;padding:8px 10px;margin-top:11px}
+.mrow{display:flex;align-items:center;gap:10px;background:#FFFFFF;border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:9px}
+.mrow .t{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st{flex:none;font-size:11px;border-radius:5px;padding:1px 7px;font-weight:600}
+.st-ing{color:var(--sub);border:1px solid var(--line)}
+.st-wait{color:var(--brand,#E8481F);background:#FDEDE7;border:1px solid #F6CBBB}
+.st-wait::before{content:"● ";font-size:8px;vertical-align:1px}
+.st-done{color:var(--ok);background:var(--okbg);border:1px solid var(--okline)}
+.mini-btn{flex:none;border:1px solid var(--brand,#E8481F);color:var(--brand,#E8481F);background:none;border-radius:99px;font-size:12px;padding:4px 12px;cursor:pointer}
+.mine-vote-row .st{border-style:dashed}
+
+/* ===== 弹层 ===== */
+.overlay{position:absolute;inset:0;background:#FFFFFF;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 26px;text-align:center}
+.okbig{width:64px;height:64px;border-radius:50%;background:var(--okbg);border:1.5px solid var(--okline);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.overlay h3{margin:0 0 6px;font-size:19px}
+.overlay .p{margin:0 0 18px;font-size:13.5px;color:var(--sub)}
+.subcard{width:100%;background:#F7F8FA;border:1px solid var(--line);border-radius:13px;padding:14px 15px;text-align:left}
+.subcard h5{margin:0 0 5px;font-size:14px}
+.subcard p{margin:0 0 12px;font-size:12.5px;color:var(--sub);line-height:1.6}
+.subbtns{display:flex;gap:9px}
+.b-pri{flex:1;border:none;background:var(--brand,#E8481F);color:#fff;border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer}
+.b-sec{flex:1;border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:10px;padding:10px;font-size:14px;cursor:pointer}
+.backdrop{position:absolute;inset:0;background:rgba(15,17,20,.45);z-index:55}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#FFFFFF;border-radius:20px 20px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));z-index:60;max-height:78%;overflow-y:auto}
+.sheet h4{margin:0 0 4px;font-size:16.5px}
+.sheet .sp{margin:0 0 14px;font-size:12.5px;color:var(--sub)}
+.fu-opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:13px}
+.fu-opt{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 13px;font-size:13.5px;cursor:pointer;color:var(--ink)}
+.fu-opt.on{border-color:var(--brand,#E8481F);color:var(--brand,#E8481F);font-weight:600;background:#FDEDE7}
+.toast{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(23,25,29,.92);color:#fff;font-size:13px;border-radius:99px;padding:9px 18px;z-index:70;max-width:82%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fatebtn{width:100%;border:1.5px dashed #C9CED6;background:none;color:#7B8290;border-radius:11px;padding:10px;font-size:13px;cursor:pointer;margin:2px 0 6px}
+.stt-ing{color:#E8481F;font-weight:600}
+.stt-done{color:#177247;font-weight:600}
+.vover{position:absolute;inset:0;z-index:65;background:rgba(23,11,7,.9);display:flex;align-items:center;justify-content:center;padding:26px}
+.vcard{text-align:center;color:#fff;max-width:300px;width:100%}
+.vsub{color:rgba(255,255,255,.65);font-size:12.5px;margin:2px 0 14px}
+.wheelwrap{position:relative;width:224px;height:224px;margin:0 auto}
+.wheelpin{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border:9px solid transparent;border-top:16px solid #E8481F;z-index:2}
+.wheelbox{width:100%;height:100%}
+.vres{min-height:22px;color:#fff;font-size:15px;font-weight:600;margin:14px 0 0}
+
+/* ===== 注解栏 ===== */
+.notes h2{margin:2px 0 4px;font-size:19px}
+.notes-now{font-size:13px;color:var(--stage-sub);margin:0 0 14px}
+.notes-now b{color:var(--brand);font-weight:600}
+.ncard{background:var(--card);border:1px solid var(--card-line);border-radius:13px;padding:14px 16px;margin-bottom:11px;font-size:14px;line-height:1.7}
+.ncard b{display:block;font-size:14.5px;margin-bottom:2px}
+.ncard .k{color:var(--stage-sub);font-size:12.5px}
+.pagefoot{max-width:1120px;margin:0 auto 40px;font-size:12.5px;color:var(--stage-sub);padding:0 4px}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="pagehead">
+  <div class="logo">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="1.5" y="1.5" width="31" height="31" rx="8" fill="var(--brand)"/><path d="M10 23 L17 9 L24 23" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="23" r="2.2" fill="#fff"/></svg>
+    <h1>帮我选</h1><span class="nametag">暂定名</span>
+  </div>
+  <p class="tagline">让过来人帮你选，让结局留下来 —— 泛决策社区小程序的 MVP 交互原型</p>
+  <div class="metachips"><span>可点击交互</span><span>微信小程序形态</span><span>四条流程：广场 · 投票 · 发布 · 回访</span><span>v0.1 · 线框级视觉</span></div>
+</header>
+
+<main class="bench">
+  <div class="phone-col">
+    <div class="phone" id="phone" data-screen="feed">
+      <div class="scr">
+        <div class="island"></div>
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="sicons">
+            <svg width="17" height="11" viewBox="0 0 17 11" aria-hidden="true"><g fill="#17191D"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></g></svg>
+            <svg width="24" height="11" viewBox="0 0 24 11" aria-hidden="true"><rect x="0.5" y="0.5" width="19" height="10" rx="3" fill="none" stroke="#17191D"/><rect x="2" y="2" width="12" height="7" rx="1.5" fill="#17191D"/><rect x="21" y="3.5" width="2" height="4" rx="1" fill="#17191D"/></svg>
+          </span>
+        </div>
+        <nav class="appnav">
+          <button class="navback" id="nav-back" hidden aria-label="返回"><svg width="11" height="18" viewBox="0 0 11 18"><path d="M9 1.5 L2 9 L9 16.5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>广场</span></button>
+          <span class="ttl" id="nav-title">帮我选</span>
+          <span class="capsule" aria-hidden="true">
+            <svg width="20" height="6" viewBox="0 0 20 6"><g fill="#3A3F47"><circle cx="3" cy="3" r="1.9"/><circle cx="10" cy="3" r="1.9"/><circle cx="17" cy="3" r="1.9"/></g></svg>
+            <svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6.4" fill="none" stroke="#3A3F47" stroke-width="1.8"/><circle cx="9" cy="9" r="2.2" fill="#3A3F47"/></svg>
+          </span>
+        </nav>
+
+        <section class="screen" id="screen-feed" aria-label="广场"></section>
+        <section class="screen" id="screen-detail" hidden aria-label="帖子详情"></section>
+
+        <section class="screen" id="screen-publish" hidden aria-label="发布求助">
+          <form id="pub-form" novalidate>
+            <div class="fgroup">
+              <div class="flabel">你在纠结什么</div>
+              <input class="finput" id="pub-title" value="预算1000，元旦三天去哪玩？" maxlength="40" placeholder="一句话说清你要选什么，如：offer 二选一怎么挑？">
+            </div>
+            <div class="fgroup">
+              <div class="flabel">背景补充</div>
+              <textarea class="ftextarea" id="pub-bg">人在武汉，元旦三天假，预算1000含往返交通。想看点没看过的城市，吃点好的。一个人，穷但快乐。</textarea>
+            </div>
+            <div class="fgroup">
+              <div class="flabel">选项 <span class="ocount">2–10 个 · 已填 3/10</span></div>
+              <div id="pub-opts">
+                <div class="orow"><input class="finput" value="北京" placeholder="选项名，如：A公司 22k·9116"><button type="button" class="odel" aria-label="删除选项">×</button></div>
+                <div class="orow"><input class="finput" value="上海" placeholder="选项名"><button type="button" class="odel" aria-label="删除选项">×</button></div>
+                <div class="orow"><input class="finput" value="成都" placeholder="选项名"><button type="button" class="odel" aria-label="删除选项">×</button></div>
+              </div>
+              <button type="button" class="oadd" id="pub-add">＋ 添加选项</button>
+            </div>
+            <div class="anonnote">
+              <span>🔒</span>
+              <span>一个人纠结到失眠也没用——交给路过的过来人。发帖<b>默认匿名</b>，不展示昵称头像；内容通过审核后展示。示例文案已帮你填好，可直接体验发布流程。</span>
+            </div>
+            <button class="submitbtn" type="submit">发布，让路过的人拦住我</button>
+          </form>
+        </section>
+
+        <section class="screen" id="screen-mine" hidden aria-label="我的"></section>
+
+        <div class="reasonbar" id="reasonbar" hidden>
+          <form style="display:flex;gap:8px;flex:1;min-width:0" id="reason-form">
+            <input id="reason-input" placeholder="给提问者一句参考意见…" maxlength="200">
+            <button type="submit">发送</button>
+          </form>
+        </div>
+
+        <nav class="tabbar" aria-label="底部导航">
+          <button class="tab active" id="tab-feed" data-tab="feed">
+            <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3.5 10 L11 3.5 L18.5 10 V18 a1 1 0 0 1-1 1 h-4 v-5 h-5 v5 h-4 a1 1 0 0 1-1-1 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            广场
+          </button>
+          <div class="fabwrap">
+            <button class="fab" data-tab="publish" aria-label="发布求助">
+              <svg width="22" height="22" viewBox="0 0 22 22"><path d="M11 4 V18 M4 11 H18" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <button class="tab" id="tab-mine" data-tab="mine">
+            <svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="7.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4 19 c1.2-3.8 3.8-5.4 7-5.4 s5.8 1.6 7 5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            我的
+          </button>
+        </nav>
+
+        <div class="overlay" id="pub-ok" hidden>
+          <div class="okbig"><svg width="30" height="30" viewBox="0 0 30 30"><path d="M7 15.5 L12.5 21 L23 9.5" stroke="#177247" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>发布成功</h3>
+          <p class="p">已进入广场 · 审核通过后对所有人可见 · 现在就转发，第一票很重要</p>
+          <div class="subcard">
+            <h5>7 天后回来记录你的最终选择</h5>
+            <p>你的最终选择和后续感受，是后来人最想看的内容。发帖 7 天后，我们会用微信订阅消息提醒你回来写回访。</p>
+            <div class="subbtns">
+              <button class="b-pri" id="sub-yes">提醒我</button>
+              <button class="b-sec" id="sub-no">暂不用</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="sheet-host"></div>
+        <div id="fate-host"></div>
+        <div class="toast" id="toast" hidden></div>
+      </div>
+    </div>
+    <p class="try">可以点的：试试「附近」tab（含位置授权模拟）· 卡片进详情 · 投票/写理由 · 中间 ＋ 发布（选项最多 10 个）· 「我的」里完成回访闭环</p>
+  </div>
+
+  <aside class="notes" aria-label="设计注解">
+    <h2>设计注解</h2>
+    <p class="notes-now">当前屏幕：<b id="notes-now">广场</b></p>
+    <div id="notes-body"></div>
+  </aside>
+</main>
+
+<footer class="pagefoot">原型用于产品评审，所有帖子与数据均为示例。确认方向后下一步：技术架构设计 → 设计文档 → 实施计划。</footer>
+
+<script>
+"use strict";
+/* ============ 数据（示例） ============ */
+var OPTC = [
+  {t:"#0E5F55", f:"#159483"},
+  {t:"#8F5B00", f:"#DFA022"},
+  {t:"#5B3FB8", f:"#8B6FF0"},
+  {t:"#2456C8", f:"#5B8DF5"}
+];
+var POSTS = [
+  { id:"p1", no:2048, cat:"求职学业", time:"2小时前", rcount:156,
+    title:"毕业第一份工作：大厂 22k 还是家乡国企 9k？",
+    bg:"25届计算机应届生，两个offer摆一周了，越比越纠结：\nA · 某互联网大厂，22k·16薪，9116，业务核心组，成长快但巨卷；\nB · 家乡省属国企信息中心，9k·13薪，朝九晚五，离家骑车十分钟，稳定但一眼望到头。\n家里意见分裂：爸说趁年轻出去闯，妈说身体要紧离家近。求过来人指条路。",
+    opts:[{l:"A · 大厂 22k·9116",d:"钱多、成长快、卷"},{l:"B · 家乡国企 9k·965",d:"稳定、离家近、慢"}],
+    votes:[238,174],
+    reasons:[
+      {o:0,text:"应届前三年别算时薪，算成长。大厂履历是后面十年的杠杆——国企的门30岁还开着，大厂的门35岁就关了。",likes:214,time:"2小时前"},
+      {o:1,text:"从大厂裸辞的过来人：9116写进合同是9116，写不进合同的是通宵。身体是1，其他是0，别拿1去换0。",likes:187,time:"1小时前"},
+      {o:0,text:"家里没矿就先赚钱。稳定的代价是十年后的天花板，漂的代价是三年内的失眠——你更付得起哪个？",likes:96,time:"1小时前"},
+      {o:1,text:"离家近+不加班=你能恋爱、健身、搞副业。工资差13k，但买回来的时间值不止13k。",likes:73,time:"42分钟前"}
+    ],
+    outcome:{o:1, after:"4个月后", text:"更新：选了家乡国企。前两个月发工资的瞬间还是肉疼，但每天六点半下班、周末双休、爸妈十分钟车程，这些是钱买不回来的。不后悔。"}
+  },
+  { id:"p6", no:2050, cat:"其他", time:"12分钟前", rcount:64, dist:"300m",
+    title:"商场 B1 一整层饭店，午饭选哪家？",
+    bg:"一个人逛商场正赶上饭点，B1 有 10 家店，我在扶梯口站了十分钟。预算 50 内，不想排 20 分钟以上的队。选择困难症晚期，帮我选！",
+    opts:[
+      {l:"老乡鸡",d:"快出餐"},{l:"太二酸菜鱼",d:"排长队"},{l:"遇见小面",d:"便宜大碗"},
+      {l:"麦当劳",d:"保底"},{l:"海底捞",d:"一人尴尬"},{l:"西贝莜面村",d:"贵一点"},
+      {l:"绿茶餐厅",d:"也排队"},{l:"村上一屋",d:"日料"},{l:"味千拉面",d:"凑合"},{l:"必胜客",d:"慢"}
+    ],
+    votes:[173,128,95,88,45,22,61,18,30,12],
+    reasons:[
+      {o:0,text:"一个人 50 内还想快点吃完，老乡鸡全程 15 分钟，商场店品控也稳。",likes:45,time:"8分钟前"},
+      {o:1,text:"太二酸菜鱼好吃是真好吃，但工作日中午也排 40 分钟，你赶时间就别考虑了。",likes:31,time:"5分钟前"}
+    ], outcome:null
+  },
+  { id:"p2", no:2049, cat:"旅行", time:"刚刚", rcount:47, dist:"1.2km",
+    title:"预算1000，元旦三天去哪玩？",
+    bg:"人在武汉，元旦三天假，预算1000含往返交通。想看点没看过的城市，吃点好的。一个人，穷但快乐。",
+    opts:[{l:"北京",d:"跨年氛围浓，住宿贵"},{l:"上海",d:"citywalk 天堂，花费高"},{l:"成都",d:"吃喝便宜，节奏舒服"}],
+    votes:[96,88,152],
+    reasons:[
+      {o:2,text:"1000块就别碰北京上海了，跨年夜住宿直接吃掉一半预算。成都吃喝全在市区，省下的交通费都是火锅。",likes:88,time:"30分钟前"},
+      {o:0,text:"元旦的北京有跨年活动和升旗，一生总要体验一次。但这个预算只能特种兵，慎重考虑节假日住宿涨价。",likes:41,time:"18分钟前"}
+    ], outcome:null
+  },
+  { id:"p3", no:2031, cat:"求职学业", time:"昨天", rcount:203,
+    title:"考研二战，还是春招先上岸？",
+    bg:"一志愿差9分进复试，调剂只能去双非。家里能供我二战一年，但同届都开始拿工资了。二战值不值？",
+    opts:[{l:"二战冲名校",d:"再赌一年"},{l:"春招就业",d:"先上车再说"}],
+    votes:[210,318],
+    reasons:[{o:1,text:"差9分说明底子够，但二战的心理成本被严重低估——没有同学、没有收入、只有倒计时。",likes:121,time:"昨天"}],
+    outcome:null
+  },
+  { id:"p4", no:2016, cat:"消费", time:"3天前", rcount:89, dist:"800m",
+    title:"换手机：iPhone 17 还是 Mate 80 Pro？",
+    bg:"旧机三年了，预算都够。主要用途：拍照、通勤播客、轻度游戏。生态两边都没绑死。",
+    opts:[{l:"iPhone 17",d:"拍照直出稳"},{l:"Mate 80 Pro",d:"信号好、快充猛"}],
+    votes:[167,198],
+    reasons:[{o:1,text:"通勤党选信号和续航，参数表上没有的一栏叫「地铁里不断连」。",likes:64,time:"2天前"}],
+    outcome:null
+  },
+  { id:"p5", no:1998, cat:"情感", time:"5天前", rcount:68,
+    title:"异地三年，要不要辞职去对象的城市？",
+    bg:"我在杭州做运营，他在长沙体制内，调动无望。要么我辞，要么继续一年见四次。今年28，想有个答案。",
+    opts:[{l:"辞职去长沙",d:"在一起，重找工作"},{l:"继续异地",d:"保住工作再看看"}],
+    votes:[121,96],
+    reasons:[{o:0,text:"28岁的三年和23岁的三年不是一个三年。工作哪里都有，人对了就别用异地消耗彼此。",likes:77,time:"4天前"}],
+    outcome:null
+  }
+];
+
+/* ============ 状态 ============ */
+var state = { screen:"feed", postId:null, votes:{}, published:[], feedTab:"new", locGranted:false };
+var $ = function(s){ return document.querySelector(s); };
+function post(id){ for(var i=0;i<POSTS.length;i++){ if(POSTS[i].id===id) return POSTS[i]; } return null; }
+function total(p){ var s=0; for(var i=0;i<p.votes.length;i++) s+=p.votes[i]; return s; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+var PINSVG='<svg width="10" height="12" viewBox="0 0 10 12"><path d="M5 11.2 C5 11.2 9 7 9 4.6 A4 4 0 1 0 1 4.6 C1 7 5 11.2 5 11.2 Z" fill="#9AA0AB"/><circle cx="5" cy="4.6" r="1.5" fill="#fff"/></svg>';
+
+/* ============ Toast / Sheet ============ */
+var toastTimer=null;
+function toast(msg){
+  var t=$("#toast"); t.textContent=msg; t.hidden=false;
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.hidden=true; },1700);
+}
+function closeSheet(){ $("#sheet-host").innerHTML=""; }
+
+/* ============ 广场 ============ */
+function renderFeed(){
+  var list = POSTS.slice();
+  if(state.feedTab==="hot") list = list.slice().sort(function(a,b){ return total(b)-total(a); });
+  if(state.feedTab==="near") list = POSTS.filter(function(p){ return p.dist; })
+    .sort(function(a,b){ return parseFloat(a.dist)-parseFloat(b.dist); });
+  var html = '<div class="feedtabs">' +
+      '<button class="ftab'+(state.feedTab==="near"?" on":"")+'" data-ftab="near">附近</button>' +
+      '<button class="ftab'+(state.feedTab==="new"?" on":"")+'" data-ftab="new">最新</button>' +
+      '<button class="ftab'+(state.feedTab==="hot"?" on":"")+'" data-ftab="hot">热门</button>' +
+    '</div>';
+  if(list.length===0){
+    html += '<div class="emptyhint">附近还没有进行中的选择题——发一条，让路过的人帮你选</div>';
+    $("#screen-feed").innerHTML = html; return;
+  }
+  for(var i=0;i<list.length;i++){
+    var p=list[i], n=total(p), rows="", top="";
+    if(p.outcome || (p.dist && state.feedTab==="near")){
+      top = '<div class="fcard-top">'+
+        (p.outcome?'<span class="done">✓ 已回访</span>':'')+
+        (p.dist && state.feedTab==="near"?'<span class="dist">'+PINSVG+p.dist+'</span>':'')+
+        '</div>';
+    }
+    if(n===0){
+      rows = '<div class="emptyhint">还没有人投票——点进去帮他选，或转发给懂的人</div>';
+    } else {
+      var idx = p.opts.map(function(o,j){ return j; }).sort(function(a,b){ return p.votes[b]-p.votes[a]; });
+      var show = idx.slice(0, Math.min(3, p.opts.length));
+      for(var k=0;k<show.length;k++){
+        var j=show[k], pct=Math.round(p.votes[j]/n*100);
+        rows += '<div class="fopt"><span class="fopt-label">'+esc(p.opts[j].l)+'</span>'+
+          '<span class="fopt-num">'+pct+'%</span>'+
+          '<div class="bar"><i style="width:'+pct+'%;background:'+OPTC[j%4].f+'"></i></div></div>';
+      }
+      if(p.opts.length>3){
+        rows += '<div class="sumline">共 '+p.opts.length+' 个选项 · 这里只显示票数前 '+show.length+' 名 · 点开看全部</div>';
+      }
+    }
+    html += '<article class="fcard" data-open="'+p.id+'">'+ top +
+      '<h3>'+esc(p.title)+'</h3>'+ rows +
+      '<div class="fcard-ft">'+n+' 人参与 · '+p.rcount+' 条意见</div></article>';
+  }
+  $("#screen-feed").innerHTML = html;
+}
+
+/* ============ 详情 ============ */
+function renderDetail(){
+  var p = post(state.postId); if(!p) return;
+  var myVote = state.votes[p.id];
+  var n = total(p), i, html="";
+
+  html += '<div class="d-meta"><span>匿名提问者</span>·<span class="'+(p.outcome?"stt-done":"stt-ing")+'">'+(p.outcome?"已回访":"投票中")+'</span>·<span>'+p.time+'</span></div>';
+  html += '<h2 class="d-title">'+esc(p.title)+'</h2>';
+  html += '<div class="d-bg">'+esc(p.bg)+'</div>';
+
+  if(p.outcome){
+    html += '<div class="outcome"><div class="outcome-top">✓ 提问者已回访 · 最终选了「'+esc(p.opts[p.outcome.o].l)+'」· '+p.outcome.after+'</div>'+
+      '<div class="outcome-q">「'+esc(p.outcome.text)+'」</div></div>';
+  }
+
+  html += '<div class="d-sec">帮他投一票</div>';
+  if(myVote===undefined){
+    html += '<div class="hintline">投票后可以看到大家的比例，并解锁发表意见</div>';
+    for(i=0;i<p.opts.length;i++){
+      var o=p.opts[i];
+      html += '<button class="vopt" data-vote="'+i+'">'+
+        '<span class="vopt-l" style="color:'+OPTC[i%4].t+'">'+esc(o.l)+'</span>'+
+        '<span class="vopt-d">'+esc(o.d||"")+'</span><span class="vopt-act">投它</span></button>';
+    }
+  } else {
+    for(i=0;i<p.opts.length;i++){
+      var pct = n===0?0:Math.round(p.votes[i]/n*100);
+      html += '<div class="ropt"><div class="row">'+
+        '<span style="font-weight:600;color:'+OPTC[i%4].t+'">'+esc(p.opts[i].l)+
+        (i===myVote?'<span class="mine-tag">你的选择</span>':'')+'</span>'+
+        '<span class="pct" style="color:'+OPTC[i%4].t+'">'+pct+'% · '+p.votes[i]+'票</span></div>'+
+        '<div class="bar"><i style="width:'+pct+'%;background:'+OPTC[i%4].f+'"></i></div></div>';
+    }
+    html += '<div class="hintline">共 '+n+' 人参与 · 你已投过票，想说的写进下面的「大家的意见」</div>';
+  }
+
+  html += '<button class="fatebtn" data-fate>不想纠结？让命运决定</button>';
+
+  html += '<div class="d-sec">大家的意见<span class="cnt">· '+p.rcount+'</span></div><div class="rlist">';
+  for(i=0;i<p.reasons.length;i++){
+    var r=p.reasons[i], c=OPTC[r.o%4];
+    html += '<div class="rcard"><div class="rcard-top">'+
+      '<span class="votedfor" style="color:'+c.t+';background:'+c.f+'22">投给了「'+esc(p.opts[r.o].l)+'」</span>'+
+      '<span style="color:#9AA0AB">匿名路人</span></div>'+
+      '<p>'+esc(r.text)+'</p>'+
+      '<div class="rcard-ft">👍 '+r.likes+' · '+r.time+'</div></div>';
+  }
+  html += '</div><button class="sharebtn" data-share>转发到群 · 点开就能帮我投</button>';
+  $("#screen-detail").innerHTML = html;
+}
+
+/* ============ 我的 ============ */
+function renderMine(){
+  var html = '<div class="mecard"><div class="mecard-top">'+
+    '<div class="avatar">匿</div><div><h4>匿名用户 #8264</h4><div class="sub">本周投票 3 次 · 发帖 1 次</div></div></div>'+
+    '<div class="mecard-note">🔒 只有你能看到这里。你的发帖对外完全匿名，不展示昵称头像。</div></div>';
+
+  html += '<div class="d-sec" style="margin-top:2px">我的求助</div>';
+  if(state.published.length===0){
+    html += '<div class="emptyhint">你发过的求助会出现在这里（原型里可用中间 ＋ 发布一条试试）</div>';
+  } else {
+    for(var i=0;i<state.published.length;i++){
+      var p=post(state.published[i]); if(!p) continue;
+      var done=!!p.outcome;
+      html += '<div class="mrow"><span class="t">'+esc(p.title)+'</span>'+
+        (done?'<span class="st st-done">✓ 已回访</span>':'<span class="st st-wait">待回访</span>')+
+        (done?'':'<button class="mini-btn" data-fu="'+p.id+'">记录选择</button>')+'</div>';
+    }
+  }
+
+  html += '<div class="d-sec" style="margin-top:14px">我投过的</div><div class="rlist">';
+  var ids=Object.keys(state.votes), any=false;
+  for(var k=0;k<ids.length;k++){
+    var pp=post(ids[k]); if(!pp) continue; any=true;
+    html += '<div class="mrow mine-vote-row"><span class="t">'+esc(pp.title)+'</span>'+
+      '<span class="st st-ing">你投给了「'+esc(pp.opts[state.votes[ids[k]]].l)+'」</span></div>';
+  }
+  if(!any) html += '<div class="emptyhint">还没有投票记录——去给一个纠结的人投一票</div>';
+  html += '</div>';
+  $("#screen-mine").innerHTML = html;
+}
+
+/* ============ 回访 Sheet ============ */
+function openFollowup(id){
+  var p=post(id); if(!p) return;
+  var chips = p.opts.map(function(o,i){
+    return '<button class="fu-opt" data-fuopt="'+i+'">'+esc(o.l)+'</button>';
+  }).join("");
+  $("#sheet-host").innerHTML =
+    '<div class="backdrop" data-close></div>'+
+    '<div class="sheet"><h4>回访：你最终选了什么？</h4>'+
+    '<p class="sp">这条更新会展示在帖子顶部，是后来人最想看的内容。（实际产品里，它由发帖 7 天后的订阅消息提醒触发）</p>'+
+    '<div class="fu-opts" id="fu-opts">'+chips+'</div>'+
+    '<div class="flabel" style="margin-bottom:7px">现在感受如何？</div>'+
+    '<textarea class="ftextarea" id="fu-text" style="min-height:88px" placeholder="给后来人一句话：选了之后怎么样，后悔吗…"></textarea>'+
+    '<div class="subbtns" style="margin-top:13px"><button class="b-pri" id="fu-go">记录回访</button>'+
+    '<button class="b-sec" data-close>先不写</button></div></div>';
+  $("#sheet-host").querySelectorAll(".fu-opt").forEach(function(b){
+    b.addEventListener("click",function(){
+      $("#sheet-host").querySelectorAll(".fu-opt").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+    });
+  });
+  $("#fu-go").addEventListener("click",function(){
+    var sel=$("#sheet-host").querySelector(".fu-opt.on");
+    if(!sel){ toast("先选一个最终选项"); return; }
+    var txt=$("#fu-text").value.trim();
+    if(!txt){ toast("写一句感受吧，后来人靠它避坑"); return; }
+    p.outcome={ o:+sel.getAttribute("data-fuopt"), after:"刚刚", text:txt };
+    closeSheet(); renderMine(); renderFeed(); toast("回访已记录，它现在展示在帖子顶部");
+    state.postId=p.id; goDetail();
+  });
+}
+
+/* ============ 导航 ============ */
+var TITLES={feed:"帮我选",detail:"选择详情",publish:"发布求助",mine:"我的"};
+function applyScreen(name){
+  state.screen=name;
+  var ph=$("#phone"); ph.setAttribute("data-screen",name);
+  ["feed","detail","publish","mine"].forEach(function(s){ $("#screen-"+s).hidden = (s!==name); });
+  $("#nav-title").textContent=TITLES[name];
+  $("#nav-back").hidden = (name!=="detail");
+  $("#reasonbar").hidden = (name!=="detail");
+  document.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("active", t.getAttribute("data-tab")===name); });
+  $("#notes-now").textContent = (name==="detail")?"帖子详情":(name==="publish"?"发布求助":(name==="mine"?"我的":"广场"));
+  renderNotes(name);
+}
+function goDetail(){
+  applyScreen("detail"); renderDetail();
+  var sd=$("#screen-detail"); sd.scrollTop=0;
+}
+function switchTab(name){
+  applyScreen(name);
+  if(name==="feed") renderFeed();
+  if(name==="mine") renderMine();
+  if(name==="publish"){}
+}
+
+/* ============ 注解 ============ */
+var NOTES={
+  feed:[
+    ["比例条直接露出","广场是观众席：划一下就能看到每个帖子的「民意分布」，冲突感就是内容——这是围观者留下来的爽点。"],
+    ["从人生大事到中午吃啥","同一套「背景+选项+投票」结构，既装得下 offer 二选一，也装得下商场 B1 的 10 家饭店——高频小事喂活日活，低频大事撑起价值。选项多时卡片只预告票数前 3 名，长列表留给详情页。"],
+    ["「已回访」徽章","结局是这个社区最值钱的内容。绿色徽章让带结局的帖子在一列卡片里跳出来，也是运营要重点曝光的对象。"],
+    ["没有分类，只有一条流","MVP 阶段所有抉择进同一条信息流：工作、旅行、消费、感情互相穿插，选题的多样性本身就是往下刷的动力。分类等信息量起来再加，避免初期每类都只有两三条帖的尴尬。"],
+    ["中央 ＋ 发布按钮","发帖是供给的生命线，给它最高的视觉权重；写帖门槛用「默认匿名 + 选项式结构」压到最低。"],
+    ["附近 tab · 位置授权","登录时请求一次位置，附近的题优先——「这层楼吃哪家」的时效半径只有几百米，路过的人就是最合适的投票者。冷启动提示：附近内容需要本地密度，先打透一个城市/商圈再放开。"],
+    ["兴趣靠投票行为学习","兴趣信号不靠问卷：连续投了几个吃饭题就多推餐饮题，投了 offer 题就多推职业题——学习零成本，新用户零负担。"]
+  ],
+  detail:[
+    ["先表态，再看结果","广场看得到比例，但进了详情就是当事人：不投票看不到结果。这个反差是参与钩子，也保证票数不被比例带偏。"],
+    ["投票 + 意见是一条动线","投完票才解锁发表意见，每条意见自动带「投给了X」立场标签——立场先于观点，读者先看阵营再看论点（JuryNow 死于「无评论二选一」：人们因完全相反的理由投同一个选项，结果不可解读）。"],
+    ["命运转盘兜底","平票、没人投、或者就是想听天由命——转盘一键出结果。「交给随机」是选择困难的最后一档出口（「小决定」类工具验证过的刚需），也是可截图传播的戏剧时刻。"],
+    ["回访块置顶展示","后来人打开帖子的第一眼是「他最后选了什么、后悔了吗」。帖子因此从一次求助沉淀成一条可被搜索的案例。"],
+    ["转发即求助","转发不是附加的分享功能，而是玩法本身：求助就要拉人，分享卡片带问题 + 选项 + 实时票数，群里点开即投——增长内建在机制里（钱包请等等已验证的裂变路径）。"]
+  ],
+  publish:[
+    ["匿名说明前置","「会被认出来」是发帖最大的心理门槛，发布页第一屏就打消它。薪资、公司名才写得出来，内容真实度全靠这个。"],
+    ["自嘲的求助姿态","「让路过的人拦住我」这类低姿态文案，把求助变成玩梗而不是示弱——求助门槛越低，发帖供给越多（借鉴钱包请等等的命名调性）。"],
+    ["选项 2–10 个动态增删","既装得下二选一的修罗场，也装得下「商场 10 家店吃哪家」的临场题；选项超过 3 个时，卡片自动只显示票数前 3 名。"],
+    ["成功页立刻要订阅授权","微信订阅消息必须用户当场授权、错过不再：发布成功的兴奋点上请求「7天后提醒我回访」，是回访率的生死钩子。"],
+    ["示例文案预填","原型里表单已填好真实感的示例（就是你的场景2），降低体验门槛，也向用户示范「一个好帖子长什么样」。"]
+  ],
+  mine:[
+    ["待回访做成待办","红点状态 + 「记录选择」按钮，把回访从「想起来才做」变成被推着做的待办；真实驱动是 7 天后的订阅消息。"],
+    ["我投过的","沉淀每次参与，喂「我帮过人，人也会帮我」的互惠预期——这是冷启动期供给动机的另一半。"],
+    ["匿名边界说清楚","只有这里能看到「这些都是你发的」。匿名产品最大的疑虑是「我找不回自己的帖子」，这里给确定感。"]
+  ]
+};
+function renderNotes(name){
+  var arr=NOTES[name]||[];
+  $("#notes-body").innerHTML = arr.map(function(it,i){
+    return '<div class="ncard"><b>'+it[0]+'</b><span class="k">'+String(i+1).padStart(2,"0")+' · '+it[1]+'</span></div>';
+  }).join("");
+}
+
+/* ============ 事件 ============ */
+document.querySelectorAll("[data-tab]").forEach(function(b){
+  b.addEventListener("click",function(){ switchTab(b.getAttribute("data-tab")); });
+});
+$("#nav-back").addEventListener("click",function(){ switchTab("feed"); });
+
+$("#screen-feed").addEventListener("click",function(e){
+  var ft=e.target.closest("[data-ftab]");
+  if(ft){
+    var key=ft.getAttribute("data-ftab");
+    if(key==="near" && !state.locGranted){ showLocDialog(); return; }
+    state.feedTab=key; renderFeed(); return;
+  }
+  var card=e.target.closest("[data-open]");
+  if(card){ state.postId=card.getAttribute("data-open"); goDetail(); }
+});
+
+function showLocDialog(){
+  $("#sheet-host").innerHTML =
+    '<div class="backdrop" data-close></div>'+
+    '<div class="sheet" style="text-align:center">'+
+    '<div style="width:52px;height:52px;border-radius:50%;background:#FDEDE7;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">'+
+    '<svg width="24" height="28" viewBox="0 0 10 12"><path d="M5 11.2 C5 11.2 9 7 9 4.6 A4 4 0 1 0 1 4.6 C1 7 5 11.2 5 11.2 Z" fill="#E8481F"/><circle cx="5" cy="4.6" r="1.5" fill="#fff"/></svg></div>'+
+    '<h4>使用你的位置</h4>'+
+    '<p class="sp" style="text-align:left">帮你选想展示附近的选择题（比如「这层楼吃哪家」）。位置只用来计算距离，不会展示给任何人，也可以随时在设置里关闭。</p>'+
+    '<div class="subbtns"><button class="b-pri" id="loc-yes">允许</button><button class="b-sec" data-close>拒绝</button></div></div>';
+  $("#loc-yes").addEventListener("click",function(){
+    state.locGranted=true; closeSheet();
+    state.feedTab="near"; renderFeed();
+    toast("已定位（示例）· 附近有 3 道进行中的选择题");
+  });
+}
+
+$("#screen-detail").addEventListener("click",function(e){
+  var v=e.target.closest("[data-vote]");
+  if(v){
+    var p=post(state.postId), i=+v.getAttribute("data-vote");
+    p.votes[i]++; state.votes[p.id]=i;
+    toast("已投给「"+p.opts[i].l+"」");
+    renderDetail(); renderFeed();
+    return;
+  }
+  if(e.target.closest("[data-fate]")){ showWheel(state.postId); return; }
+  if(e.target.closest("[data-share]")) toast("已生成分享卡片（原型示意）");
+});
+
+$("#screen-mine").addEventListener("click",function(e){
+  var fu=e.target.closest("[data-fu]");
+  if(fu) openFollowup(fu.getAttribute("data-fu"));
+});
+$("#sheet-host").addEventListener("click",function(e){
+  if(e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) closeSheet();
+});
+
+$("#fate-host").addEventListener("click",function(e){
+  if(e.target.closest("[data-vclose]") || e.target.closest("[data-wclose]")) this.innerHTML="";
+});
+
+/* ============ 命运转盘 ============ */
+var wheelRot=0;
+function mod360(x){ return ((x%360)+360)%360; }
+function showWheel(pid){
+  var p=post(pid), n=p.opts.length, i;
+  var svg='<svg viewBox="0 0 200 200" style="display:block;width:100%;height:100%">';
+  for(i=0;i<n;i++){
+    var a0=(i*360/n-90)*Math.PI/180, a1=((i+1)*360/n-90)*Math.PI/180;
+    var x0=100+86*Math.cos(a0), y0=100+86*Math.sin(a0);
+    var x1=100+86*Math.cos(a1), y1=100+86*Math.sin(a1);
+    svg+='<path d="M100,100 L'+x0.toFixed(1)+','+y0.toFixed(1)+' A86,86 0 0 1 '+x1.toFixed(1)+','+y1.toFixed(1)+' Z" fill="'+OPTC[i%4].f+'" stroke="#fff" stroke-width="1.5"/>';
+    var am=((i+0.5)*360/n-90)*Math.PI/180;
+    var lx=100+55*Math.cos(am), ly=100+55*Math.sin(am);
+    svg+='<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#fff" font-size="9" text-anchor="middle" dominant-baseline="middle" transform="rotate('+((i+0.5)*360/n).toFixed(1)+','+lx.toFixed(1)+','+ly.toFixed(1)+')">'+esc(p.opts[i].l.slice(0,5))+'</text>';
+  }
+  svg+='</svg>';
+  $("#fate-host").innerHTML='<div class="vover"><div class="vcard">'+
+    '<h3 style="margin:0 0 2px;font-size:20px;color:#fff">命运转盘</h3>'+
+    '<p class="vsub">不想等结果？听天由命一次</p>'+
+    '<div class="wheelwrap"><div class="wheelpin"></div><div class="wheelbox" id="wheelbox">'+svg+'</div></div>'+
+    '<p class="vres" id="wheelres">…</p>'+
+    '<div class="subbtns" style="margin-top:6px"><button class="b-pri" id="wheelspin">再转一次</button><button class="b-sec" data-wclose>关掉</button></div>'+
+    '</div></div>';
+  var box=$("#wheelbox"), res=$("#wheelres");
+  wheelRot=0;
+  box.style.transition="none";
+  box.style.transform="rotate(0deg)";
+  var spin=function(){
+    res.textContent="转盘中…";
+    var w=Math.floor(Math.random()*n);
+    var center=mod360((w+0.5)*360/n);
+    var jitter=(Math.random()-0.5)*(360/n)*0.6;
+    var target=wheelRot+1440+mod360(-center-wheelRot)+jitter;
+    box.style.transition="transform 3.8s cubic-bezier(.15,.85,.18,1)";
+    box.style.transform="rotate("+target.toFixed(1)+"deg)";
+    wheelRot=target;
+    setTimeout(function(){ res.textContent="命运说：「"+p.opts[w].l+"」"; },3950);
+  };
+  $("#wheelspin").addEventListener("click",spin);
+  setTimeout(spin,60);
+}
+
+$("#reason-form").addEventListener("submit",function(e){
+  e.preventDefault();
+  var p=post(state.postId);
+  if(state.votes[p.id]===undefined){ toast("先投一票，才能发表意见"); return; }
+  var txt=$("#reason-input").value.trim();
+  if(!txt){ toast("写一句意见吧"); return; }
+  p.reasons.unshift({o:state.votes[p.id],text:txt,likes:0,time:"刚刚"});
+  p.rcount++; $("#reason-input").value="";
+  renderDetail(); toast("意见已发表");
+});
+
+/* 发布 */
+function optRows(){ return Array.prototype.slice.call(document.querySelectorAll("#pub-opts .orow")); }
+function refreshCount(){
+  var n=optRows().length;
+  document.querySelector(".ocount").textContent="2–10 个 · 已填 "+n+"/10";
+  $("#pub-add").hidden = n>=10;
+}
+$("#pub-add").addEventListener("click",function(){
+  if(optRows().length>=10){ toast("最多 10 个选项"); return; }
+  var row=document.createElement("div");
+  row.className="orow";
+  row.innerHTML='<input class="finput" placeholder="选项名"><button type="button" class="odel" aria-label="删除选项">×</button>';
+  $("#pub-opts").appendChild(row);
+  refreshCount();
+  row.querySelector("input").focus();
+});
+$("#pub-opts").addEventListener("click",function(e){
+  var d=e.target.closest(".odel"); if(!d) return;
+  if(optRows().length<=2){ toast("至少保留 2 个选项"); return; }
+  d.closest(".orow").remove(); refreshCount();
+});
+$("#pub-form").addEventListener("submit",function(e){
+  e.preventDefault();
+  var title=$("#pub-title").value.trim();
+  var bg=$("#pub-bg").value.trim();
+  var labels=optRows().map(function(r){ return r.querySelector("input").value.trim(); }).filter(Boolean);
+  if(title.length<5){ toast("标题再说清楚一点（至少 5 个字）"); return; }
+  if(labels.length<2){ toast("至少要有 2 个有效选项"); return; }
+  var no=POSTS.reduce(function(m,q){ return Math.max(m,q.no||0); },0)+1;
+  var p={ id:"own"+Date.now(), no:no, cat:"", time:"刚刚", rcount:0, title:title, bg:bg||"（未填背景）",
+    opts:labels.map(function(l){ return {l:l,d:""}; }),
+    votes:labels.map(function(){ return 0; }), reasons:[], outcome:null };
+  POSTS.unshift(p); state.published.push(p.id);
+  $("#pub-ok").hidden=false;
+});
+function afterPublish(){
+  $("#pub-ok").hidden=true;
+  state.feedTab="new";
+  switchTab("feed"); renderFeed();
+  toast("帖子已发布 · 在「我的」里可以回访");
+}
+$("#sub-yes").addEventListener("click",function(){ toast("已订阅回访提醒 · 发帖 7 天后送达（示意）"); setTimeout(afterPublish,900); });
+$("#sub-no").addEventListener("click",afterPublish);
+
+/* 初始化 */
+switchTab("feed");
+</script>
+</body>
+</html>
